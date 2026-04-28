@@ -8,15 +8,16 @@ import {
   Settings,
   LogOut,
   Sun,
-  Moon,
-} from "lucide-react";
+  Moon, Check,
+} from "lucide-react";import { Share2, Trash2, Pencil } from "lucide-react";
 import { useTheme } from "../ThemeContext";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [history, setHistory] = useState([]);
-
+const [editingId, setEditingId] = useState(null);
+const [tempName, setTempName] = useState("");
   // Use the theme border and bg for the card style dynamically
   const cardStyle = {
     background: theme.bgSecondary,
@@ -33,10 +34,51 @@ const Dashboard = () => {
     );
     setHistory(storedHistory);
   }, []);
+  // SHARE
+  const handleShare = (id) => {
+    const link = `${window.location.origin}/playground/${id}`;
+    navigator.clipboard.writeText(link);
+    alert("Link copied!"); // you can replace with your toast later
+  };
 
+  // DELETE
+  const handleDelete = (id) => {
+    const updated = history.filter((proj) => proj.id !== id);
+    setHistory(updated);
+    localStorage.setItem("designHistory", JSON.stringify(updated));
+  };
+
+  // RENAME
+  const handleRename = (id) => {
+    const newName = prompt("Enter new project name:");
+    if (!newName) return;
+
+    const updated = history.map((proj) =>
+      proj.id === id ? { ...proj, name: newName } : proj,
+    );
+
+    setHistory(updated);
+    localStorage.setItem("designHistory", JSON.stringify(updated));
+  };
+  const handleRenameClick = (proj) => {
+    setEditingId(proj.id);
+    setTempName(proj.name);
+  };
+
+  const handleRenameSave = (id) => {
+    if (!tempName.trim()) return;
+
+    const updated = history.map((proj) =>
+      proj.id === id ? { ...proj, name: tempName } : proj,
+    );
+
+    setHistory(updated);
+    localStorage.setItem("designHistory", JSON.stringify(updated));
+    setEditingId(null);
+  };
   const createNewProject = () => {
     const roomId = Math.random().toString(36).substring(7);
-    const projectName = `Quantum Design Alpha-${roomId}`;
+    const projectName = `Untitled-${roomId}`;
 
     const newEntry = {
       id: roomId,
@@ -48,7 +90,18 @@ const Dashboard = () => {
 
     navigate(`/playground/${roomId}?host=true`);
   };
-
+const actionBtnStyle = {
+  background: "transparent",
+  border: `1px solid ${theme.border}`,
+  color: theme.textSecondary,
+  padding: "6px",
+  borderRadius: "6px",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  transition: "all 0.2s ease",
+};
   return (
     <div
       style={{
@@ -242,16 +295,115 @@ const Dashboard = () => {
                     (e.currentTarget.style.borderColor = theme.border)
                   }
                 >
+                  {/* TOP ROW */}
                   <div
                     style={{
-                      fontSize: "16px",
-                      fontWeight: 600,
-                      color: theme.text,
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
                       marginBottom: "8px",
                     }}
                   >
-                    {proj.name}
+                    {/* LEFT: Name or Input */}
+                    {editingId === proj.id ? (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          flex: 1,
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <input
+                          value={tempName}
+                          onChange={(e) => setTempName(e.target.value)}
+                          autoFocus
+                          onFocus={(e) => e.target.select()}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleRenameSave(proj.id);
+                            if (e.key === "Escape") setEditingId(null);
+                          }}
+                          onBlur={() => handleRenameSave(proj.id)} // optional smooth UX
+                          style={{
+                            flex: 1,
+                            padding: "8px 12px",
+                            borderRadius: "8px",
+                            border: `1px solid ${theme.border}`,
+                            outline: "none",
+                            background: theme.bgSecondary,
+                            color: theme.text,
+                            fontSize: "14px",
+                            fontWeight: "500",
+                            transition:
+                              "all 0.25s cubic-bezier(0.22, 1, 0.36, 1)",
+                          }}
+                        />
+
+                        {/* Tick Save */}
+                        <button
+                          onClick={() => handleRenameSave(proj.id)}
+                          style={{
+                            ...actionBtnStyle,
+                            background: theme.isDark ? "#fff" : "#000",
+                            color: theme.isDark ? "#000" : "#fff",
+                          }}
+                        >
+                          <Check size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          fontSize: "16px",
+                          fontWeight: 600,
+                          color: theme.text,
+                        }}
+                      >
+                        {proj.name}
+                      </div>
+                    )}
+
+                    {/* RIGHT: Action buttons */}
+                    {editingId !== proj.id && (
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        {/* Share */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShare(proj.id);
+                          }}
+                          style={actionBtnStyle}
+                        >
+                          <Share2 size={16} />
+                        </button>
+
+                        {/* Rename */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRenameClick(proj);
+                          }}
+                          style={actionBtnStyle}
+                        >
+                          <Pencil size={16} />
+                        </button>
+
+                        {/* Delete */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(proj.id);
+                          }}
+                          style={actionBtnStyle}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
                   </div>
+
+                  {/* BOTTOM ROW */}
                   <div
                     style={{
                       display: "flex",
@@ -272,6 +424,5 @@ const Dashboard = () => {
       </main>
     </div>
   );
-};
-
+};;
 export default Dashboard;
