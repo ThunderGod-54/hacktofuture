@@ -13,6 +13,7 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
+import Toast from "../components/Toast";
 import { useTheme } from "../ThemeContext";
 
 const Playground = () => {
@@ -41,10 +42,17 @@ const Playground = () => {
     cursor: "pointer",
     transition: "all 0.2s ease",
   });
-
+const [toast, setToast] = useState({
+  show: false,
+  message: "",
+});
   const copyInviteLink = () => {
     navigator.clipboard.writeText(window.location.href);
-    alert("Invite link copied to clipboard! Share it with a collaborator.");
+
+    setToast({
+      show: true,
+      message: "Invite link copied!",
+    });
   };
 
   useEffect(() => {
@@ -62,6 +70,12 @@ const Playground = () => {
         transition: "all 0.3s ease",
       }}
     >
+      <Toast
+        show={toast.show}
+        message={toast.message}
+        theme={theme}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
       {/* Sidebar */}
       <aside
         style={{
@@ -96,7 +110,10 @@ const Playground = () => {
             onClick={() => navigate("/dashboard")}
           >
             <BrainCircuit size={20} style={{ color: theme.accent }} />
-            Synapse <span style={{ color: theme.textSecondary, fontWeight: 400 }}>Beta</span>
+            SYNAPSE{" "}
+            <span style={{ color: theme.textSecondary, fontWeight: 400 }}>
+              Beta
+            </span>
           </div>
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             <button
@@ -282,9 +299,18 @@ const Playground = () => {
           }}
         >
           <div style={{ textAlign: "center" }}>
-            <BrainCircuit size={48} style={{ color: theme.accent, marginBottom: "16px", opacity: 0.5 }} />
+            <BrainCircuit
+              size={48}
+              style={{
+                color: theme.accent,
+                marginBottom: "16px",
+                opacity: 0.5,
+              }}
+            />
             <p>Konva Stage will go here</p>
-            <p style={{ fontSize: "12px", marginTop: "8px" }}>Room ID: {roomId}</p>
+            <p style={{ fontSize: "12px", marginTop: "8px" }}>
+              Room ID: {roomId}
+            </p>
           </div>
         </div>
 
